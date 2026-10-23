@@ -959,11 +959,18 @@ namespace LuaUnit
     /**
     * Returns the race mask
     *
-    * @return uint32 racemask
+    * Race masks are 256-bit (4 x 64-bit words): this returns one word, by default the first (races 1-64).
+    *
+    * @param uint32 word = 1 : the 64-bit word to return, 1-4 (races 1-64, 65-128, 129-192, 193-256)
+    * @return uint64 racemask
     */
     int GetRaceMask(lua_State* L, Unit* unit)
     {
-        ALE::Push(L, unit->getRaceMask());
+        uint32 word = ALE::CHECKVAL<uint32>(L, 2, 1);
+        if (word < 1 || word > RaceMask::WORD64_COUNT)
+            return luaL_argerror(L, 2, "expected a race mask word, 1-4");
+
+        ALE::Push(L, unit->getRaceMask().GetWord64(word - 1));
         return 1;
     }
 

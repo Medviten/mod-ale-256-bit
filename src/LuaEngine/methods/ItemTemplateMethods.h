@@ -174,11 +174,32 @@ namespace LuaItemTemplate
     /**
      * Returns the [Player] races allowed to use this [ItemTemplate].
      *
-     * @return uint32 allowableRace
+     * Race masks are 256-bit (4 x 64-bit words, as the `AllowableRace`, `AllowableRace_2`, ... columns): this
+     * returns one word, by default the first (races 1-64). Use [ItemTemplate:HasAllowableRace] to test a single race.
+     *
+     * @param uint32 word = 1 : the 64-bit word to return, 1-4 (races 1-64, 65-128, 129-192, 193-256)
+     * @return uint64 allowableRace
      */
     int GetAllowableRace(lua_State* L, ItemTemplate* itemTemplate)
     {
-        ALE::Push(L, itemTemplate->AllowableRace);
+        uint32 word = ALE::CHECKVAL<uint32>(L, 2, 1);
+        if (word < 1 || word > RaceMask::WORD64_COUNT)
+            return luaL_argerror(L, 2, "expected a race mask word, 1-4");
+
+        ALE::Push(L, itemTemplate->AllowableRace.GetWord64(word - 1));
+        return 1;
+    }
+
+    /**
+     * Returns `true` if the [Player] race given can use this [ItemTemplate].
+     *
+     * @param uint32 race
+     * @return bool allowed
+     */
+    int HasAllowableRace(lua_State* L, ItemTemplate* itemTemplate)
+    {
+        uint32 race = ALE::CHECKVAL<uint32>(L, 2);
+        ALE::Push(L, itemTemplate->AllowableRace.HasRace(race));
         return 1;
     }
 
